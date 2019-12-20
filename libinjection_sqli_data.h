@@ -34,7 +34,7 @@ static size_t parse_estring(sfilter * sf);
 static size_t parse_bword(sfilter * sf);
 
 
-typedef size_t (*pt2Function)(sfilter *sf);
+typedef size_t (*pt2Function)(sfilter *sf); // 定义pt2Function为函数的指针变量，函数的参数为sfilter类型，返回值为size_t类型。该指针可以引用上面的各个函数
 static const pt2Function char_parse_map[] = {
    &parse_white, /* 0 */
    &parse_white, /* 1 */

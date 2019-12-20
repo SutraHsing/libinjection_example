@@ -636,6 +636,8 @@ static size_t parse_string_core(const char *cs, const size_t len, size_t pos,
     /*
      * offset is to skip the perhaps first quote char
      */
+    // extern void *memchr(const void *buf, int ch, size_t count);从buf所指的前count个字节查找字符ch，返回指向ch的指针或NULL
+    // 此处跳过pos位置和offset（前面可能的第一个引号）位置，查找此后的分隔符
     const char *qpos =
         (const char *) memchr((const void *) (cs + pos + offset), delim,
                               len - pos - offset);
@@ -1203,8 +1205,8 @@ const char* libinjection_version()
 }
 
 int libinjection_sqli_tokenize(struct libinjection_sqli_state * sf)
-{
-    pt2Function fnptr;
+{ // 用户输入标识化
+    pt2Function fnptr; // 函数的指针变量，用于存储对应的解析函数
     size_t *pos = &sf->pos;
     stoken_t *current = sf->current;
     const char *s = sf->s;
@@ -1214,7 +1216,7 @@ int libinjection_sqli_tokenize(struct libinjection_sqli_state * sf)
         return FALSE;
     }
 
-    st_clear(current);
+    st_clear(current); // 准备sf内存空间
     sf->current = current;
 
     /*
@@ -1241,9 +1243,9 @@ int libinjection_sqli_tokenize(struct libinjection_sqli_state * sf)
          * Porting Note: this is mapping of char to function
          *   charparsers[ch]()
          */
-        fnptr = char_parse_map[ch];
+        fnptr = char_parse_map[ch]; // map中存储了对特定ascii码的字符的对应解析函数
 
-        *pos = (*fnptr) (sf);
+        *pos = (*fnptr) (sf); // 取指针变量的值，其值为解析函数，调用函数解析sf
 
         /*
          *
@@ -1257,7 +1259,7 @@ int libinjection_sqli_tokenize(struct libinjection_sqli_state * sf)
 }
 
 void libinjection_sqli_init(struct libinjection_sqli_state * sf, const char *s, size_t len, int flags)
-{
+{ // 清空sf内存
     if (flags == 0) {
         flags = FLAG_QUOTE_NONE | FLAG_SQL_ANSI;
     }
@@ -1272,7 +1274,7 @@ void libinjection_sqli_init(struct libinjection_sqli_state * sf, const char *s, 
 }
 
 void libinjection_sqli_reset(struct libinjection_sqli_state * sf, int flags)
-{
+{ // 保留userdata和lookup值，清空sf内存
     void *userdata = sf->userdata;
     ptr_lookup_fn lookup = sf->lookup;;
 
