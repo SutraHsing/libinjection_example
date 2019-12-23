@@ -106,7 +106,7 @@ struct libinjection_sqli_state {
     /* MAX TOKENS + 1 since we use one extra token
      * to determine the type of the previous token
      */
-    struct libinjection_sqli_token tokenvec[8];
+    struct libinjection_sqli_token tokenvec[12];
 #endif
 
     /*
@@ -119,7 +119,7 @@ struct libinjection_sqli_state {
      * +1 for ending null
      * Minimum of 8 bytes to add gcc's -fstack-protector to work
      */
-    char fingerprint[8];
+    char fingerprint[12];
 
     /*
      * Line number of code that said decided if the input was SQLi or
