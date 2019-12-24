@@ -1976,10 +1976,10 @@ char libinjection_sqli_lookup_word(struct libinjection_sqli_state *sql_state, in
 int libinjection_sqli_blacklist(struct libinjection_sqli_state* sql_state)
 {
     /*
-     * use minimum of 8 bytes to make sure gcc -fstack-protector
+     * use minimum of 12 bytes to make sure gcc -fstack-protector
      * works correctly
      */
-    char fp2[8];
+    char fp2[12];
     char ch;
     size_t i;
     size_t len = strlen(sql_state->fingerprint);
@@ -1993,8 +1993,8 @@ int libinjection_sqli_blacklist(struct libinjection_sqli_state* sql_state)
     /*
       to keep everything compatible, convert the
       v0 fingerprint pattern to v1
-      v0: up to 5 chars, mixed case
-      v1: 1 char is '0', up to 5 more chars, upper case
+      v0: up to 9 chars, mixed case
+      v1: 1 char is '0', up to 9 more chars, upper case
     */
 
     fp2[0] = '0';

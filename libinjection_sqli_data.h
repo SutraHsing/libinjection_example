@@ -2809,6 +2809,7 @@ static const keyword_t sql_keywords[] = {
     {"0ENUEV", 'F'},
     {"0EOK(E", 'F'},
     {"0EOKNK", 'F'},
+    {"0EOKNKN&1;", 'F'}, // "SELECT * FROM test WHERE id = 1 AND 1 = 1;"
     {"0ES&(1", 'F'},
     {"0ES&(E", 'F'},
     {"0ES&(F", 'F'},
@@ -9648,5 +9649,5 @@ static const keyword_t sql_keywords[] = {
     {"||", '&'},
     {"~*", 'o'},
 };
-static const size_t sql_keywords_sz = 9352;
+static const size_t sql_keywords_sz = 9353;
 #endif
