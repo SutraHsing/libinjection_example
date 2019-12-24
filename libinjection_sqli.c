@@ -1259,7 +1259,7 @@ int libinjection_sqli_tokenize(struct libinjection_sqli_state * sf)
 }
 
 void libinjection_sqli_init(struct libinjection_sqli_state * sf, const char *s, size_t len, int flags)
-{ // 清空sf内存
+{ // 清空sf内存，初始化sf
     if (flags == 0) {
         flags = FLAG_QUOTE_NONE | FLAG_SQL_ANSI;
     }
@@ -1274,7 +1274,7 @@ void libinjection_sqli_init(struct libinjection_sqli_state * sf, const char *s, 
 }
 
 void libinjection_sqli_reset(struct libinjection_sqli_state * sf, int flags)
-{ // 保留userdata和lookup值，清空sf内存
+{ // 保留userdata和lookup值，清空sf内存，保留input和长度
     void *userdata = sf->userdata;
     ptr_lookup_fn lookup = sf->lookup;;
 
@@ -1386,7 +1386,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
     st_clear(&last_comment);
 
     /* Skip all initial comments, right-parens ( and unary operators
-     *
+     * 跳过所有初始的注释，左括号和一元操作符
      */
     sf->current = &(sf->tokenvec[0]);
     while (more) {
@@ -1401,10 +1401,10 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
 
     if (! more) {
         /* If input was only comments, unary or (, then exit */
-        return 0;
+        return 0; // 如果没有更多，证明：如果上面只有一个token，可能是一个任意token，如果解析了多个token，整个input只能解析出多个comment的类型就没了
     } else {
         /* it's some other token */
-        pos += 1;
+        pos += 1; // 还有更多待解析的，pos后移
     }
 
     while (1) {
@@ -1413,8 +1413,8 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
         /* do we have all the max number of tokens?  if so do
          * some special cases for 5 tokens
          */
-        if (pos >= LIBINJECTION_SQLI_MAX_TOKENS) {
-            if (
+        if (pos >= LIBINJECTION_SQLI_MAX_TOKENS) { // 针对开头不少于5个的诸如comment类型的input
+            if ( // 1o(1); 1,(1); no(n); no(1); 1),(1; n)o(n
                 (
                     sf->tokenvec[0].type == TYPE_NUMBER &&
                     (sf->tokenvec[1].type == TYPE_OPERATOR || sf->tokenvec[1].type == TYPE_COMMA) &&
@@ -1445,7 +1445,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
                     )
                 )
             {
-                if (pos > LIBINJECTION_SQLI_MAX_TOKENS) {
+                if (pos > LIBINJECTION_SQLI_MAX_TOKENS) { // 怎么形成的？待调试发现
 		    st_copy(&(sf->tokenvec[1]), &(sf->tokenvec[LIBINJECTION_SQLI_MAX_TOKENS]));
                     pos = 2;
                     left = 0;
@@ -1456,12 +1456,12 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
             }
         }
 
-        if (! more || left >= LIBINJECTION_SQLI_MAX_TOKENS) {
+        if (! more || left >= LIBINJECTION_SQLI_MAX_TOKENS) { // ？
             left = pos;
             break;
         }
 
-        /* get up to two tokens */
+        /* get up to two tokens */ // 到这里有一个token没有处理，进入循环，再生成一个，凑成两个
         while (more && pos <= LIBINJECTION_SQLI_MAX_TOKENS && (pos - left) < 2) {
             sf->current = &(sf->tokenvec[pos]);
             more = libinjection_sqli_tokenize(sf);
@@ -1483,7 +1483,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
 
         /* FOLD: "ss" -> "s"
          * "foo" "bar" is valid SQL
-         * just ignore second string
+         * just ignore second string 折叠两个string
          */
         if (sf->tokenvec[left].type == TYPE_STRING && sf->tokenvec[left+1].type == TYPE_STRING) {
             pos -= 1;
@@ -1493,7 +1493,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
             /* not sure how various engines handle
              * 'select 1;;drop table foo' or
              * 'select 1; /x foo x/; drop table foo'
-             * to prevent surprises, just fold away repeated semicolons
+             * to prevent surprises, just fold away repeated semicolons 折叠两个分号
              */
             pos -= 1;
             sf->stats_folds += 1;
@@ -1591,7 +1591,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
              *  "foo" = LIKE(1,2)
              */
             continue;
-        } else if ((sf->tokenvec[left].type == TYPE_OPERATOR) && (
+        } else if ((sf->tokenvec[left].type == TYPE_OPERATOR) && ( // 代码走到这个判断，无法进入判断内，也无法到达下一个判断，就跳出
                        cstrcasecmp("LIKE", sf->tokenvec[left].val, sf->tokenvec[left].len) == 0 ||
                        cstrcasecmp("NOT LIKE", sf->tokenvec[left].val, sf->tokenvec[left].len) == 0)) {
             if (sf->tokenvec[left+1].type == TYPE_LEFTPARENS) {
@@ -1690,6 +1690,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
 
         /* all cases of handing 2 tokens is done
            and nothing matched.  Get one more token
+           2个未处理的token都没有匹配的折叠，再生成一位token，进行匹配
         */
         FOLD_DEBUG;
         while (more && pos <= LIBINJECTION_SQLI_MAX_TOKENS && pos - left < 3) {
@@ -1705,7 +1706,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
             }
         }
 
-        /* do we have three tokens? If not then we are done */
+        /* do we have three tokens? If not then we are done */ //是否真的生成了3位未处理的token？
         if (pos -left < 3) {
             left = pos;
             continue;
