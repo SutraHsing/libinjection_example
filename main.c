@@ -9,7 +9,7 @@ int main(int argc, const char* argv[])
     struct libinjection_sqli_state state;
     int issqli;
 
-    const char* input = argv[1];
+    const char* input = "1# blah blah";
     size_t slen = strlen(input);
 
     /* in real-world, you would url-decode the input, etc */

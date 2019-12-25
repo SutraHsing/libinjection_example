@@ -1456,12 +1456,12 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
             }
         }
 
-        if (! more || left >= LIBINJECTION_SQLI_MAX_TOKENS) { // ？
+        if (! more || left >= LIBINJECTION_SQLI_MAX_TOKENS) { // input是否还有没检查的，token数组是否用完
             left = pos;
             break;
         }
 
-        /* get up to two tokens */ // 到这里有一个token没有处理，进入循环，再生成一个，凑成两个
+        /* get up to two tokens */ // 未处理的token数量为0或1，进入循环，再生成一个，直到生成2个未处理的token
         while (more && pos <= LIBINJECTION_SQLI_MAX_TOKENS && (pos - left) < 2) {
             sf->current = &(sf->tokenvec[pos]);
             more = libinjection_sqli_tokenize(sf);
@@ -1476,6 +1476,8 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
         }
         FOLD_DEBUG;
         /* did we get 2 tokens? if not then we are done */
+        // 通过上一步如果确实有了2个未处理的token，则可以继续进行下面的折叠操作
+        // 可能是上一步只生成了1个token就结束了（没有更多input或者token数组长度不够），则也结束fold函数 待确认其他可能性
         if (pos - left < 2) {
             left = pos;
             continue;
@@ -1706,7 +1708,9 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
             }
         }
 
-        /* do we have three tokens? If not then we are done */ //是否真的生成了3位未处理的token？
+        /* do we have three tokens? If not then we are done */
+        //是否真的生成了3位未处理的token？ 待确定还有哪些情况可能走这里
+        // "1# blah blah"完整解析特征码为1n，在1# blah 解析为1后走到上面，循环仅进行一层便由于input解析完而退出，这里符合条件即退出
         if (pos -left < 3) {
             left = pos;
             continue;
@@ -1744,7 +1748,7 @@ int libinjection_sqli_fold(struct libinjection_sqli_state * sf)
                     sf->tokenvec[left].type == TYPE_NUMBER ) &&
                    sf->tokenvec[left+1].type == TYPE_OPERATOR &&
                    (sf->tokenvec[left+2].type == TYPE_NUMBER ||
-                    sf->tokenvec[left+2].type == TYPE_BAREWORD)) {
+                    sf->tokenvec[left+2].type == TYPE_BAREWORD)) { // e.g. id=1,1=id,1=1,id=id
             pos -= 2;
             left = 0;
             continue;
